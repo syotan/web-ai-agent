@@ -91,13 +91,23 @@ set OPENAI_API_KEY=your_openai_api_key_here
 python run.py "Googleで東京の天気を検索する"
 ```
 
-### 対話的使用
+### 対話的使用（CLI）
 
 ```bash
 python run.py
 ```
 
 プロンプトが表示されたら、実行したい操作を自然言語で入力します。
+
+### Chainlit GUIによる使用（推奨）
+
+Web UIを使って、より直感的に操作することができます：
+
+```bash
+chainlit run app.py
+```
+
+ブラウザが自動で開き、GUIが表示されます。自然言語で指示を入力し、生成されたステップを確認した上で実行できます。
 
 ### オプション
 
@@ -121,8 +131,12 @@ python run.py "Twitterにログインする" --api-key "your_openai_api_key_here
 
 ```
 Web-AI-Agent/
-├── run.py                 # メインエントリーポイント
+├── run.py                 # CLIメインエントリーポイント
+├── app.py                 # Chainlit GUI用エントリーポイント
+├── chainlit.md            # Chainlitの設定ファイル
 ├── requirements.txt       # 依存関係
+├── .env                   # 環境変数設定ファイル（APIキーなど）
+├── .env.example           # 環境変数の設定例
 ├── README.md              # このファイル
 └── src/                   # ソースコード
     ├── __init__.py
@@ -130,6 +144,16 @@ Web-AI-Agent/
     ├── browser.py         # ブラウザ自動化（Playwright関連）
     └── main.py            # CLI処理とメインロジック
 ```
+
+## Chainlit GUI機能
+
+ChainlitベースのGUI（`app.py`）には以下の機能があります：
+
+- Webインターフェースで自然言語指示を入力
+- 生成された操作ステップをテーブル形式で表示
+- JSON形式の操作ステップも確認可能
+- 実行前の確認機能（実行するボタン/キャンセルボタン）
+- ブラウザ操作の実行状態をリアルタイムで表示
 
 ## サンプル指示
 

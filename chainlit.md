@@ -1,0 +1,1 @@
+# Chainlit configuration filechatbot_name: "Web-AI-Agent"chatbot_description: "自然言語でWeb操作を指示できるAIエージェント"default_expanded_text_length: 1000ui:  theme: light  primary_color: "#4169E1"  accent_color: "#1E90FF"  large_screen_width: "1000px"markdown:  code_theme: github-light  user:  authenticate: falsetelemetry:  enabled: false
