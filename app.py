@@ -62,11 +62,10 @@ async def main(message: cl.Message):
         steps = await agent.generate_steps(instruction)
         
         if not steps:
-            await processing_msg.update(content="操作ステップの生成に失敗しました。別の指示を試してください。")
+            await cl.Message(content="操作ステップの生成に失敗しました。別の指示を試してください。").send()
             return
         
         # ステップ情報をテーブル形式で表示
-        elements = []
         table_data = {
             "headers": ["アクション", "セレクタ", "値"],
             "rows": []
@@ -76,57 +75,56 @@ async def main(message: cl.Message):
             action = step.get("action", "")
             selector = step.get("selector", "")
             value = step.get("value", "")
-            table_data["rows"].append([action, selector, value])
+            table_data["rows"].append([str(action), str(selector), str(value)])
         
-        elements.append(cl.Table(name="操作ステップ", data=table_data))
+        # Markdownテーブルの生成
+        headers = table_data["headers"]
+        rows = table_data["rows"]
+        md_table = "| " + " | ".join(headers) + " |\n"
+        md_table += "| " + " | ".join(['---'] * len(headers)) + " |\n"
+        for row in rows:
+            md_table += "| " + " | ".join([str(cell) for cell in row]) + " |\n"
         
-        # JSONコードも表示
-        elements.append(
-            cl.Code(
-                name="JSON形式の操作ステップ",
-                language="json",
-                value=json.dumps(steps, indent=2, ensure_ascii=False)
-            )
-        )
-        
-        # 実行確認画面を表示
-        await processing_msg.update(
-            content="以下の操作ステップが生成されました。実行しますか？",
-            elements=elements
-        )
-        
+        # テーブルとJSONをまとめて送信
+        md_content = "以下の操作ステップが生成されました。実行しますか？\n\n"
+        md_content += md_table
+        md_content += "\n```json\n" + json.dumps(steps, indent=2, ensure_ascii=False) + "\n```"
+        await cl.Message(content=md_content).send()
+
         # 実行確認を待機
         res = await cl.AskActionMessage(
             content="操作を実行しますか？",
             actions=[
-                cl.Action(name="execute", value="execute", label="実行する"),
-                cl.Action(name="cancel", value="cancel", label="キャンセル")
+                cl.Action(name="execute", payload={"action": "execute"}, label="実行する"),
+                cl.Action(name="cancel", payload={"action": "cancel"}, label="キャンセル")
             ]
         ).send()
-        
-        if res and res.get("value") == "execute":
+
+        if res and res.get("payload", {}).get("action") == "execute":
             # 実行処理
-            executing_msg = cl.Message(content="ブラウザでステップを実行中...")
-            await executing_msg.send()
-            
+            await cl.Message(content="ブラウザでステップを実行中...").send()
+
             # BrowserAutomationのインスタンスを作成
             browser = BrowserAutomation()
-            
+
+            # ステップの詳細を出力
+            steps_debug = "\n".join([f"- {s.get('action', '')}: {s.get('selector', '')} {s.get('value', '')}" for s in steps])
+            await cl.Message(content=f"実行するステップの詳細:\n```\n{steps_debug}\n```").send()
+
             # 実行結果を返すタスクを作成
-            loop = asyncio.get_event_loop()
-            task = loop.create_task(browser.run_steps(steps))
-            
-            # タスクの結果を待機
             try:
-                await task
-                await executing_msg.update(content="✅ 操作が完了しました！")
+                # 直接実行して例外をキャッチ
+                await browser.run_steps(steps)
+                await cl.Message(content="✅ 操作が完了しました！").send()
             except Exception as e:
-                await executing_msg.update(content=f"❌ 操作実行中にエラーが発生しました: {e}")
+                import traceback
+                error_details = traceback.format_exc()
+                await cl.Message(content=f"❌ 操作実行中にエラーが発生しました: {e}\n\n```\n{error_details}\n```").send()
         else:
             await cl.Message(content="操作をキャンセルしました。").send()
-            
+
     except Exception as e:
-        await processing_msg.update(content=f"エラーが発生しました: {e}")
+        await cl.Message(content=f"エラーが発生しました: {e}").send()
 
 
 if __name__ == "__main__":

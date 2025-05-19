@@ -47,6 +47,13 @@ class AIAgent:
         - wait: 特定の時間待機（valueにミリ秒を指定）
         - select: ドロップダウンから選択（selectorに要素のセレクタ、valueに選択肢の値を指定）
         
+        特別な考慮事項：
+        - Googleを開く場合、ログイン確認ダイアログが表示されることがあります。その場合は「ログインしない」または「No thanks」ボタンをクリックするステップを追加してください。
+        - reCAPTCHA（「私はロボットではありません」チェックボックス）が検出された場合は、自動でクリックするステップを含めてください。セレクタとして ".recaptcha-checkbox-border" や "//span[@role='checkbox']" を試してみてください。
+        - 複雑なreCAPTCHAについては、"//iframe[contains(@title, 'reCAPTCHA')]" などのセレクタを使ってiframeを特定し、そのiframeにfocusしてから操作を行うようにしてください。
+        - Googleの検索ボックスには通常 "input[name='q']" または "textarea[name='q']" セレクタを使用します。
+        - クリック操作の前に、対象要素が視認できることを確認するため、wait操作を追加することを推奨します。
+        
         レスポンスは必ず以下のJSON形式の配列で返してください：
         [
           {"action": "open_url", "value": "https://example.com"},
@@ -60,7 +67,7 @@ class AIAgent:
         try:
             # ChatGPT APIにリクエスト
             response = self.client.chat.completions.create(
-                model="gpt-4o",  # 適切なモデルを指定
+                model="gpt-4.1-nano-2025-04-14",  # 適切なモデルを指定
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": instruction}
